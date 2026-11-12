@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Externalidades, poder de mercado e internalización</title>
+<style>
+  :root{
+    color-scheme: light;
+    --surface-0:#f9f9f7; --surface-1:#ffffff; --surface-2:#f3f2ee;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --border:#dedcd4; --border-strong:#c3c2b7; --accent:#2a78d6;
+    --series-demand:#2a78d6;  /* BMgP / EC */
+    --series-supply:#eb6834;  /* CMgP / EP */
+    --series-social:#4a3aa7;  /* curva social (BMgS o CMgS) */
+    --series-gov:#1baf7a;     /* fisco */
+    --series-dwl:#e34948;     /* PIE */
+    --series-ext:#a87400;     /* efecto externo (daño / beneficio) */
+    --series-net:#2f2f2c;     /* beneficio marginal neto privado */
+    --cs-fill:rgba(42,120,214,0.16); --ps-fill:rgba(235,104,52,0.16);
+    --gov-fill:rgba(27,175,122,0.22); --dwl-fill:rgba(227,73,72,0.32);
+    --rent-fill:rgba(74,58,167,0.20); --ext-fill:rgba(168,116,0,0.10);
+    --series-ben:#c2378a; --ben-fill:rgba(194,55,138,0.09);
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --surface-0:#0d0d0d; --surface-1:#171716; --surface-2:#1f1f1d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8b8a84;
+    --border:#2c2c2a; --border-strong:#383835; --accent:#3987e5;
+    --series-demand:#3987e5; --series-supply:#d95926; --series-social:#9085e9;
+    --series-gov:#199e70; --series-dwl:#e66767; --series-ext:#e0a52a; --series-net:#e8e6df;
+    --cs-fill:rgba(57,135,229,0.22); --ps-fill:rgba(217,89,38,0.22);
+    --gov-fill:rgba(25,158,112,0.28); --dwl-fill:rgba(230,103,103,0.34);
+    --rent-fill:rgba(144,133,233,0.26); --ext-fill:rgba(224,165,42,0.12);
+    --series-ben:#e46aae; --ben-fill:rgba(228,106,174,0.12);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--surface-0);color:var(--text-primary);
+       font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:14px;line-height:1.45;
+       transition:background .25s,color .25s;}
+  header{padding:16px 22px 12px;border-bottom:1px solid var(--border);background:var(--surface-1);
+         display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+  header h1{margin:0 0 4px;font-size:19px;font-weight:700;letter-spacing:-.01em;}
+  header p{margin:0;color:var(--text-secondary);font-size:13px;max-width:980px;}
+  /* ---- obturador de tema (interruptor claro/oscuro) ---- */
+  .theme-switch{flex:none;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-secondary);
+                cursor:pointer;user-select:none;}
+  .theme-switch input{position:absolute;opacity:0;width:0;height:0;}
+  .theme-switch .track{width:50px;height:26px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border-strong);
+                       position:relative;transition:background .25s;}
+  .theme-switch .knob{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#f4b400;
+                      box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .25s,background .25s;
+                      display:flex;align-items:center;justify-content:center;font-size:11px;}
+  .theme-switch input:checked + .track{background:#2b2b45;}
+  .theme-switch input:checked + .track .knob{transform:translateX(24px);background:#d9d7ff;}
+  .theme-switch input:focus-visible + .track{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .layout{display:grid;grid-template-columns:310px minmax(460px,1fr) 320px;gap:14px;padding:14px;align-items:start;}
+  @media (max-width:1250px){ .layout{grid-template-columns:310px minmax(420px,1fr);} .layout > aside.right{grid-column:1 / -1;} }
+  @media (max-width:860px){ .layout{grid-template-columns:1fr;} }
+  .panel{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;padding:13px 15px;}
+  .panel + .panel{margin-top:12px;}
+  .panel h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin:0 0 10px;font-weight:700;}
+  .field{margin-bottom:11px;} .field:last-child{margin-bottom:0;}
+  .field > label{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--text-secondary);margin-bottom:3px;}
+  .val{font-variant-numeric:tabular-nums;color:var(--text-primary);font-weight:600;}
+  input[type="range"]{width:100%;accent-color:var(--accent);}
+  select{width:100%;padding:7px 8px;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface-1);color:var(--text-primary);font-size:13px;}
+  .seg{display:flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;margin-bottom:9px;}
+  .seg button{flex:1;padding:6px 4px;font-size:12.5px;font-family:inherit;border:none;background:var(--surface-2);color:var(--text-secondary);cursor:pointer;}
+  .seg button + button{border-left:1px solid var(--border-strong);}
+  .seg button.on{background:var(--accent);color:#fff;font-weight:600;}
+  .seg-label{font-size:11.5px;color:var(--text-muted);margin:0 0 3px;}
+  .hint{font-size:11.5px;color:var(--text-muted);margin-top:4px;}
+  .desc{font-size:12px;color:var(--text-secondary);background:var(--surface-2);border-radius:8px;padding:8px 10px;margin:6px 0 10px;}
+  .warn{font-size:12.3px;color:var(--series-dwl);background:var(--dwl-fill);border-radius:6px;padding:7px 10px;margin-top:8px;}
+  .check{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--text-secondary);margin:5px 0;cursor:pointer;}
+  .check input{margin-top:2px;}
+  .graph-card h2{margin-bottom:4px;}
+  svg.chart{width:100%;height:auto;display:block;background:var(--surface-1);border-radius:8px;}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:11.8px;color:var(--text-secondary);padding:4px 2px 2px;}
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .sw{width:13px;height:11px;border-radius:3px;flex:none;}
+  .sw.line{height:3px;border-radius:2px;width:18px;}
+  .sw.dash{height:0;border-top:2.5px dashed;width:18px;border-radius:0;}
+  .formula-box{font-size:12.4px;color:var(--text-secondary);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-top:10px;}
+  .formula-box .line{margin:3px 0;} .formula-box em{font-style:normal;color:var(--text-primary);font-weight:600;}
+  table.results{width:100%;border-collapse:collapse;font-size:12.4px;}
+  table.results caption{text-align:left;font-size:11.5px;color:var(--text-muted);margin-bottom:5px;}
+  table.results th, table.results td{text-align:right;padding:4px 4px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;}
+  table.results th:first-child, table.results td:first-child{text-align:left;}
+  table.results thead th{color:var(--text-muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.03em;}
+  tr.total td{font-weight:700;border-top:2px solid var(--border-strong);}
+  .neg{color:var(--series-dwl);} .pos{color:#0c8f5a;}
+  :root[data-theme="dark"] .pos{color:#4cc98f;}
+  .badge{display:inline-block;font-size:10.8px;font-weight:700;padding:1px 7px;border-radius:999px;}
+  .badge.loss{background:var(--dwl-fill);color:var(--series-dwl);}
+  .badge.gain{background:rgba(27,175,122,.18);color:var(--series-gov);}
+  .interp{font-size:12.4px;color:var(--text-secondary);line-height:1.5;}
+  .interp p{margin:0 0 7px;}
+  .interp b{color:var(--text-primary);}
+  table.compare{width:100%;border-collapse:collapse;font-size:12.2px;}
+  table.compare th, table.compare td{padding:5px 5px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;}
+  table.compare th:first-child, table.compare td:first-child{text-align:left;}
+  table.compare thead th{font-size:10.8px;text-transform:uppercase;color:var(--text-muted);letter-spacing:.03em;}
+  table.compare tbody tr{cursor:pointer;}
+  table.compare tbody tr:hover{background:var(--surface-2);}
+  table.compare tbody tr.sel{background:var(--rent-fill);}
+  table.compare tbody tr.na td{color:var(--text-muted);}
+  .bar{height:8px;border-radius:4px;background:var(--series-gov);min-width:1px;}
+  .bar-wrap{width:90px;background:var(--surface-2);border-radius:4px;display:inline-block;vertical-align:middle;}
+  sub{font-size:.72em;}
+  .ext-card{border:1px solid var(--border);border-left:4px solid var(--series-ext);border-radius:8px;padding:9px 10px 6px;margin-bottom:10px;background:var(--surface-1);}
+  .ext-card.ben{border-left-color:var(--series-ben);}
+  .ext-card .ext-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:6px;}
+  .ext-card .ext-head button{border:none;background:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:0 4px;}
+  .ext-card .ext-head button:hover{color:var(--series-dwl);}
+  .ext-card .seg{margin-bottom:6px;} .ext-card .seg button{padding:4px 3px;font-size:11.8px;}
+  .ext-card .ex{font-size:11.3px;color:var(--text-muted);margin-top:2px;}
+  .add-btn{width:100%;padding:7px;border:1px dashed var(--border-strong);border-radius:8px;background:var(--surface-2);color:var(--text-primary);font-family:inherit;font-size:12.5px;cursor:pointer;margin-bottom:6px;}
+  .add-btn:hover:not(:disabled){background:var(--surface-0);} .add-btn:disabled{opacity:.45;cursor:default;}
+  footer{padding:10px 22px 24px;color:var(--text-muted);font-size:11.5px;max-width:1150px;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Externalidades: asignación de mercado, poder de mercado y políticas de internalización</h1>
+    <p>Beneficios y costos marginales privados y sociales; equilibrio de mercado (Q<sub>M</sub>) frente al óptimo social (Q<sub>OS</sub>);
+       excedentes, efecto externo y pérdida irrecuperable de eficiencia (PIE). Permite contrastar instrumentos de internalización
+       bajo competencia perfecta o con poder de mercado del vendedor, del comprador o de ambos.</p>
+  </div>
+  <label class="theme-switch" title="Alternar tema claro / oscuro">
+    <span id="themeLabel">Claro</span>
+    <input type="checkbox" id="themeToggle" aria-label="Tema oscuro">
+    <span class="track"><span class="knob" id="themeKnob">☀</span></span>
+  </label>
+</header>
+
+<div class="layout">
+  <!-- =============== CONTROLES =============== -->
+  <aside>
+    <div class="panel">
+      <h2>Externalidades presentes</h2>
+      <div class="field">
+        <label for="preset"><span>Casos prediseñados</span></label>
+        <select id="preset">
+          <option value="single">Una externalidad (caso estándar)</option>
+          <option value="transport">Transporte automotor: emisiones (−, prod.) + congestión (−, cons.)</option>
+          <option value="vaccine">Vacunas: inmunidad de rebaño (+, cons.) + residuos industriales (−, prod.)</option>
+          <option value="fruit">Fruticultura: polinización (+, prod.) + deriva de agroquímicos (−, prod.)</option>
+          <option value="offset">Compensación exacta: daño de producción = beneficio de consumo</option>
+          <option value="custom">Personalizado</option>
+        </select>
+      </div>
+      <div id="extList"></div>
+      <button type="button" id="addExt" class="add-btn">+ Agregar otra externalidad (máx. 3)</button>
+      <div class="hint">Los efectos se agregan: BMg<sub>S</sub> = BMg<sub>P</sub> − Σ(efectos de consumo) y CMg<sub>S</sub> = CMg<sub>P</sub> + Σ(efectos de producción), con costos sumando y beneficios restando.</div>
+      <div class="warn" id="extWarn" style="display:none"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Mercado del bien (curvas privadas)</h2>
+      <div class="field"><label for="a"><span>Ordenada de BMg<sub>P</sub>: a</span> <span class="val" id="av"></span></label><input type="range" id="a" min="40" max="200" step="1" value="100"></div>
+      <div class="field"><label for="b"><span>Pendiente de BMg<sub>P</sub>: b</span> <span class="val" id="bv"></span></label><input type="range" id="b" min="0.2" max="3" step="0.05" value="1"></div>
+      <div class="field"><label for="c"><span>Ordenada de CMg<sub>P</sub>: c</span> <span class="val" id="cv"></span></label><input type="range" id="c" min="0" max="80" step="1" value="10"></div>
+      <div class="field"><label for="d"><span>Pendiente de CMg<sub>P</sub>: d</span> <span class="val" id="dv"></span></label><input type="range" id="d" min="0.2" max="3" step="0.05" value="1"></div>
+      <div class="hint">BMg<sub>P</sub>(Q) = a − bQ (demanda) &nbsp;·&nbsp; CMg<sub>P</sub>(Q) = c + dQ (oferta).</div>
+    </div>
+
+    <div class="panel">
+      <h2>Estructura de mercado</h2>
+      <div class="field">
+        <select id="power">
+          <option value="none">Competencia perfecta (tomadores de precio)</option>
+          <option value="seller">Poder de mercado del vendedor (monopolio)</option>
+          <option value="buyer">Poder de mercado del comprador (monopsonio)</option>
+          <option value="both">Poder de ambos lados (monopolio bilateral)</option>
+        </select>
+      </div>
+      <div class="field" id="f-beta">
+        <label for="beta"><span>Poder de negociación del vendedor β</span> <span class="val" id="betav"></span></label>
+        <input type="range" id="beta" min="0" max="1" step="0.05" value="0.5">
+        <div class="hint">La cantidad surge del lado corto, Q = mín{Q<sub>monopolio</sub>, Q<sub>monopsonio</sub>}; el precio se ubica entre CMg<sub>P</sub>(Q) (β = 0) y BMg<sub>P</sub>(Q) (β = 1).</div>
+      </div>
+      <div class="desc" id="powerDesc"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Medida de internalización</h2>
+      <div class="field"><select id="inst"></select></div>
+      <div class="desc" id="instDesc"></div>
+      <div class="field" id="f-tman">
+        <label for="tman"><span>Cuña por unidad t</span> <span class="val" id="tmanv"></span></label>
+        <input type="range" id="tman" min="-60" max="60" step="0.5" value="10">
+        <div class="hint">t &gt; 0: impuesto; t &lt; 0: subsidio. Separa el precio del comprador (P<sub>c</sub>) del recibido por el vendedor (P<sub>v</sub>).</div>
+      </div>
+      <div class="field" id="f-rights">
+        <div class="seg-label">Derechos de propiedad sobre la externalidad</div>
+        <div class="seg" data-key="rights"><button data-v="victims" class="on">De los afectados</button><button data-v="gen">De los generadores</button></div>
+      </div>
+      <label class="check" id="f-auction"><input type="checkbox" id="auction" checked> <span>Permisos subastados por el Estado (si no, asignación gratuita: la renta queda en el lado generador)</span></label>
+    </div>
+
+    <div class="panel">
+      <h2>Visualización</h2>
+      <label class="check"><input type="checkbox" id="showSurplus" checked> Mostrar excedentes (EC, EP, fisco, rentas)</label>
+      <label class="check"><input type="checkbox" id="showDWL" checked> Mostrar pérdida irrecuperable de eficiencia (PIE)</label>
+      <label class="check"><input type="checkbox" id="showExt" checked> Mostrar efecto externo total (daño / beneficio)</label>
+      <label class="check"><input type="checkbox" id="showMR" checked> Mostrar IMg / GMg y curva desplazada por la cuña</label>
+      <label class="check"><input type="checkbox" id="showRef" checked> <span>Mostrar puntos de referencia (E<sub>C</sub>, E<sub>M</sub>, E<sub>OS</sub>)</span></label>
+    </div>
+  </aside>
+
+  <!-- =============== GRÁFICOS =============== -->
+  <section>
+    <div class="panel graph-card">
+      <h2>Mercado del bien: beneficios y costos marginales privados y sociales</h2>
+      <svg class="chart" id="chartMain" viewBox="0 0 760 488" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="legend" id="legendMain"></div>
+    </div>
+    <div class="panel graph-card">
+      <h2>Gráfico paralelo: equilibrio sobre la externalidad</h2>
+      <svg class="chart" id="chartExt" viewBox="0 0 760 320" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="legend" id="legendExt"></div>
+      <div class="formula-box" id="formulaBox"></div>
+    </div>
+    <div class="panel">
+      <h2>Contraste de medidas de internalización (parámetros actuales)</h2>
+      <table class="compare" id="compareTable"></table>
+      <div class="hint">Haga clic en una fila para seleccionar la medida. % de eficiencia = W / W<sub>máx</sub>, con W<sub>máx</sub> el bienestar en el óptimo social.</div>
+    </div>
+  </section>
+
+  <!-- =============== RESULTADOS =============== -->
+  <aside class="right">
+    <div class="panel">
+      <h2>Resultados de la medida elegida</h2>
+      <table class="results" id="resTable"></table>
+    </div>
+    <div class="panel">
+      <h2>Puntos de referencia</h2>
+      <table class="results" id="refTable"></table>
+    </div>
+    <div class="panel">
+      <h2>Lectura económica</h2>
+      <div class="interp" id="interp"></div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  Modelo lineal con fines ilustrativos: BMg<sub>P</sub>(Q) = a − bQ, CMg<sub>P</sub>(Q) = c + dQ, EMg<sub>k</sub>(Q) = e<sub>k</sub> (constante) o g<sub>k</sub>·Q (creciente) para cada externalidad k, agregadas con signo en X(Q) = Σ s<sub>k</sub>·EMg<sub>k</sub>(Q).
+  Bienestar social W = EC + EP + fisco + rentas ± efecto externo = ∫<sub>0</sub><sup>Q</sup>[BMg<sub>S</sub>(q) − CMg<sub>S</sub>(q)]dq; las transferencias
+  (impuestos, subsidios, pagos de Coase) son redistribuciones que no alteran W. PIE = W<sub>máx</sub> − W. Archivo autocontenido (HTML + JavaScript + SVG),
+  sin dependencias externas. Referencias: Pindyck &amp; Rubinfeld, cap. 18; Varian, cap. 34; Buchanan (1969, <i>AER</i>) sobre impuestos pigouvianos con monopolio.
+</footer>
+
+<script>
+/* ============================================================
+   NÚCLEO DEL MODELO (lógica pura, sin DOM) — validado en Node
+   ------------------------------------------------------------
+   BMgP(Q) = a − bQ            beneficio marginal privado (demanda)
+   CMgP(Q) = c + dQ            costo marginal privado (oferta)
+   EMg(Q)  = e0 + e1·Q ≥ 0     magnitud del efecto externo marginal
+             constante: e1 = 0 ; creciente: e0 = 0, e1 > 0
+   s = +1 externalidad negativa (costo externo), s = −1 positiva (beneficio externo)
+   Origen consumo:   BMgS = BMgP − s·EMg ,  CMgS = CMgP
+   Origen producción: CMgS = CMgP + s·EMg , BMgS = BMgP
+   Óptimo social (BMgS = CMgS):  Q_OS = (a − c − s·e0) / (b + d + s·e1)
+
+   Poder de mercado (multiplicadores de pendiente):
+     vendedor (monopolio):   IMg = a − 2bQ   → mb = 2
+     comprador (monopsonio): GMg = c + 2dQ   → md = 2
+     ambos (monopolio bilateral): Q = mín{Q_monopolio, Q_monopsonio}
+       (regla no cooperativa del lado corto); el precio se reparte con β.
+   Con una cuña por unidad t(Q) = t0 + t1·Q (impuesto si > 0, subsidio si < 0):
+       a − mb·b·Q − t0 − t1·Q = c + md·d·Q
+       ⇒ Q = (a − c − t0) / (mb·b + md·d + t1)
+   ============================================================ */
+const STRUCT = {
+  none:   [[1,1]],
+  seller: [[2,1]],
+  buyer:  [[1,2]],
+  both:   [[2,1],[1,2]],
+};
+
+/* VARIAS EXTERNALIDADES SIMULTÁNEAS
+   p.exts = [{s, origin, e0, e1}, ...]  (cada una con su signo, origen y forma)
+   Efecto externo marginal NETO con signo (costo > 0, beneficio < 0):
+       X(Q) = Σ_k s_k·(e0_k + e1_k·Q) = X0 + X1·Q
+   Lado del consumo:    Xc(Q) = Σ_{k∈consumo} s_k·EMg_k(Q)  ⇒  BMgS = BMgP − Xc
+   Lado de la producción: Xp(Q) = Σ_{k∈producción} s_k·EMg_k(Q) ⇒ CMgS = CMgP + Xp
+   Óptimo social: Q_OS = (a − c − X0)/(b + d + X1)
+   Con una sola externalidad se recupera exactamente el caso anterior.
+   s (signo neto) = signo de X(Q_OS): define si el instrumento corrector es
+   impuesto (s = +1) o subsidio (s = −1); "origin" = lado dominante en Q_OS. */
+function buildModel(p){
+  const {a,b,c,d,power,beta} = p;
+  const exts = p.exts || [{s:p.s, origin:p.origin, e0:p.e0, e1:p.e1}];
+  const X0  = exts.reduce((t,x)=>t + x.s*x.e0, 0);
+  const X1  = exts.reduce((t,x)=>t + x.s*x.e1, 0);
+  const Xside = side => Q => exts.reduce((t,x)=>t + (x.origin===side ? x.s*(x.e0 + x.e1*Q) : 0), 0);
+  const Xc = Xside('cons'), Xp = Xside('prod');
+  const X  = Q => X0 + X1*Q;                         // efecto externo marginal neto (con signo)
+  const BMgP = Q => a - b*Q;
+  const CMgP = Q => c + d*Q;
+  const BMgS = Q => BMgP(Q) - Xc(Q);
+  const CMgS = Q => CMgP(Q) + Xp(Q);
+  const IMg  = Q => a - 2*b*Q;
+  const GMg  = Q => c + 2*d*Q;
+  const Bint = Q => a*Q - b*Q*Q/2;
+  const Cint = Q => c*Q + d*Q*Q/2;
+  const Xint = Q => X0*Q + X1*Q*Q/2;                 // efecto externo total neto (costo > 0)
+  const compInt = (x,Q) => x.s*(x.e0*Q + x.e1*Q*Q/2); // aporte de cada externalidad
+  const Wof  = Q => Bint(Q) - Cint(Q) - Xint(Q);
+  const denOS = b + d + X1;
+  const QOS = denOS>0 ? Math.max(0,(a - c - X0)/denOS) : NaN;
+  const XOS = X(QOS);
+  const s = XOS < -1e-12 ? -1 : 1;
+  const origin = Math.abs(Xc(QOS)) >= Math.abs(Xp(QOS)) ? (exts.some(x=>x.origin==='cons')?'cons':'prod') : 'prod';
+  const EMg = Q => s*X(Q);                           // compatibilidad: magnitud en el sentido neto
+  const e0 = s*X0, e1 = s*X1;
+  const Eint = Q => s*Xint(Q);
+  const structs = STRUCT[power];
+  // cantidad de equilibrio con cuña t(Q)=t0+t1·Q bajo la estructura vigente
+  const solveQ = (t0,t1=0) => Math.min(...structs.map(([mb,md])=>{
+    const den = mb*b + md*d + t1;
+    return den>0 ? Math.max(0,(a - c - t0)/den) : Infinity;
+  }));
+  // cuña constante que lleva el equilibrio exactamente a Qt (segundo mejor)
+  const tStar = Qt => Math.min(...structs.map(([mb,md]) => a - c - (mb*b + md*d)*Qt));
+  // precios con cuña t (Pb − Ps = t) dado Q de equilibrio
+  const taxPrices = (Q,t) => {
+    let Pb;
+    if(power==='buyer') Pb = CMgP(Q) + t;
+    else if(power==='both') Pb = beta*BMgP(Q) + (1-beta)*(CMgP(Q)+t);
+    else Pb = BMgP(Q);           // competencia o poder del vendedor
+    return {Pb, Ps: Pb - t};
+  };
+  // precio único cuando la cantidad viene fijada (regulación, Coase):
+  // con poder de mercado fija el precio el lado que lo tiene; en competencia,
+  // la renta de escasez la retiene el lado generador (que detenta el derecho).
+  const qtyPrice = Q => {
+    if(power==='seller') return BMgP(Q);
+    if(power==='buyer')  return CMgP(Q);
+    if(power==='both')   return beta*BMgP(Q) + (1-beta)*CMgP(Q);
+    return origin==='prod' ? BMgP(Q) : CMgP(Q);
+  };
+  return {p,a,b,c,d,s,origin,e0,e1,power,beta,EMg,BMgP,CMgP,BMgS,CMgS,IMg,GMg,
+          Bint,Cint,Eint,Wof,QOS,denOS,solveQ,tStar,taxPrices,qtyPrice,structs,
+          exts,X,X0,X1,Xc,Xp,Xint,compInt,XOS,
+          hasCons: exts.some(x=>x.origin==='cons'), hasProd: exts.some(x=>x.origin==='prod')};
+}
+
+/* Cuentas de bienestar comunes a todos los escenarios */
+function account(M, Q, Pb, Ps, gov, extra={}){
+  const CS = M.Bint(Q) - Pb*Q;
+  const PS = (Ps===null) ? 0 : Ps*Q - M.Cint(Q);
+  const Ext = -M.Xint(Q);                    // neto: < 0 daño externo ; > 0 beneficio externo
+  const comps = M.exts.map(x => -M.compInt(x,Q)); // aporte de cada externalidad al bienestar
+  let CSx = CS, PSx = PS;
+  if(extra.rentTo==='cons') CSx += extra.rent;
+  if(extra.rentTo==='prod') PSx += extra.rent;
+  if(extra.publicCost) {}                    // ya incluido en gov
+  const W = CSx + PSx + gov + Ext;
+  const Wmax = M.Wof(M.QOS);
+  return {Q, Pb, Ps, CS:CSx, PS:PSx, gov, Ext, comps, W, Wmax, PIE: Math.max(0, Wmax - W), eff: Wmax>0 ? W/Wmax : NaN};
+}
+
+const INSTRUMENTS = {
+  none:   {label:'Sin intervención (equilibrio de mercado)'},
+  pigou:  {label:'Impuesto/subsidio pigouviano: t = EMg(Q_OS)'},
+  second: {label:'Impuesto/subsidio corregido por poder de mercado (2.º mejor)'},
+  manual: {label:'Impuesto/subsidio por unidad (manual)'},
+  qty:    {label:'Orden y control: regulación de cantidad (Q̄ = Q_OS)'},
+  permits:{label:'Permisos transferibles (tope = Q_OS)'},
+  coase:  {label:'Negociación privada (Teorema de Coase)'},
+  public: {label:'Provisión pública directa (monopolio estatal)'},
+};
+
+function scenario(M, inst, opt={}){
+  const s = M.s;
+  const base = () => { const Q=M.solveQ(0); const {Pb,Ps}=M.taxPrices(Q,0); return account(M,Q,Pb,Ps,0); };
+  const withTax = t => { const Q=M.solveQ(t); const {Pb,Ps}=M.taxPrices(Q,t); return Object.assign(account(M,Q,Pb,Ps,t*Q),{t}); };
+  switch(inst){
+    case 'none': return Object.assign(base(),{t:0, ok:true});
+    case 'pigou': { const t = s*M.EMg(M.QOS); return Object.assign(withTax(t),{ok:true}); }
+    case 'second': { const t = M.tStar(M.QOS); return Object.assign(withTax(t),{ok:true}); }
+    case 'manual': return Object.assign(withTax(opt.tManual||0),{ok:true});
+    case 'qty': {
+      const Q0 = M.solveQ(0);
+      const binding = s>0 ? Q0 > M.QOS + 1e-9 : Q0 < M.QOS - 1e-9;
+      if(!binding) return Object.assign(base(),{t:0, ok:true, binding:false});
+      const Q = M.QOS, P = M.qtyPrice(Q);
+      return Object.assign(account(M,Q,P,P,0),{t:0, ok:true, binding:true});
+    }
+    case 'permits': {
+      if(s<0) return {ok:false, msg:'Los permisos transferibles limitan la cantidad de una actividad que genera un costo externo; con una externalidad positiva no hay daño que acotar (el problema es de subprovisión), por lo que el instrumento no es aplicable.'};
+      const r = Math.max(0, M.tStar(M.QOS));
+      const Q = M.solveQ(r);
+      const {Pb,Ps} = M.taxPrices(Q,r);
+      const auction = !!opt.auction;
+      const rent = r*Q;
+      const genSide = M.origin==='prod' ? 'prod' : 'cons';
+      const acc = account(M,Q,Pb,Ps, auction? rent : 0, auction? {} : {rentTo:genSide, rent});
+      return Object.assign(acc,{t:r, ok:true, permitPrice:r, binding:r>0, auction});
+    }
+    case 'coase': {
+      const Q = M.solveQ(s*M.e0, s*M.e1);
+      const P = M.qtyPrice(Q);
+      const acc = Object.assign(account(M,Q,P,P,0),{t:0, ok:true});
+      // pago mínimo al generador = beneficio neto privado (percibido) al que renuncia al pasar
+      // de su óptimo Q0 a Q: ∫_Q^{Q0} BMN_p(q)dq = ½·m·(Q0 − Q)², con m la pendiente de BMN_p
+      // (área de texto, sin efectos de segunda ronda sobre precios)
+      const Q0 = M.solveQ(0);
+      const m = Math.max(...M.structs.map(([mb,md])=>mb*M.b + md*M.d));
+      const forgone = 0.5*m*(Q0-Q)*(Q0-Q);
+      let transfer, dir;
+      if(s>0 && opt.rights==='victims'){ transfer = M.exts.reduce((t,x)=>t+(x.s>0?M.compInt(x,Q):0),0); dir='generadores → afectados'; }
+      else if(s>0){ transfer = forgone; dir='afectados → generadores'; }
+      else { transfer = forgone; dir='beneficiarios → generadores'; }
+      return Object.assign(acc,{transfer, transferDir:dir});
+    }
+    case 'public': {
+      const Q = M.QOS, Pb = M.BMgP(Q);
+      const gov = Pb*Q - M.Cint(Q);
+      return Object.assign(account(M,Q,Pb,null,gov),{t:0, ok:true, publicProv:true});
+    }
+  }
+}
+
+if(typeof module!=='undefined') module.exports = {buildModel, scenario, account, INSTRUMENTS, STRUCT};
+
+/* ============================================================
+   INTERFAZ (DOM + SVG). El núcleo del modelo está arriba
+   (buildModel, scenario, INSTRUMENTS) y fue validado en Node.
+   ============================================================ */
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const fmt0 = n => (Math.abs(n)<5e-4?0:n).toLocaleString('es-AR',{maximumFractionDigits:0});
+const fmt1 = n => (Math.abs(n)<5e-3?0:n).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const fmt2 = n => (Math.abs(n)<5e-4?0:n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const sgn1 = n => (n>0.05?'+':'') + fmt1(n);
+
+/* ---------- selectores segmentados estáticos (derechos de Coase) ---------- */
+const seg = {rights:'victims'};
+document.querySelectorAll('.seg[data-key]').forEach(box=>{
+  box.addEventListener('click', e=>{
+    const btn = e.target.closest('button'); if(!btn) return;
+    box.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b===btn));
+    seg[box.dataset.key] = btn.dataset.v;
+    render();
+  });
+});
+
+/* ---------- lista de externalidades simultáneas (hasta 3) ---------- */
+const MAX_EXT = 3;
+const PRESETS = {
+  single:    [{sign:'neg',origin:'prod',form:'const',e0:20,e1:0.6}],
+  transport: [{sign:'neg',origin:'prod',form:'const',e0:12,e1:0.6},{sign:'neg',origin:'cons',form:'grow',e0:10,e1:0.4}],
+  vaccine:   [{sign:'pos',origin:'cons',form:'const',e0:25,e1:0.6},{sign:'neg',origin:'prod',form:'const',e0:10,e1:0.6}],
+  fruit:     [{sign:'pos',origin:'prod',form:'const',e0:14,e1:0.6},{sign:'neg',origin:'prod',form:'grow',e0:10,e1:0.5}],
+  offset:    [{sign:'neg',origin:'prod',form:'const',e0:20,e1:0.6},{sign:'pos',origin:'cons',form:'const',e0:20,e1:0.6}],
+};
+let extState = PRESETS.single.map(x=>Object.assign({},x));
+const SHORT_EX = {
+  'neg-prod':'p. ej., efluentes o emisiones de la actividad productiva.',
+  'neg-cons':'p. ej., tabaquismo, congestión, conducción imprudente.',
+  'pos-prod':'p. ej., apicultura que poliniza frutales vecinos; derrames de I+D.',
+  'pos-cons':'p. ej., vacunación, educación.',
+};
+function extTag(x){ return (x.sign==='neg'?'negativa':'positiva')+', '+(x.origin==='prod'?'producción':'consumo'); }
+function buildExtList(){
+  const box=$('extList'); box.innerHTML='';
+  extState.forEach((x,i)=>{
+    const card=document.createElement('div'); card.className='ext-card'+(x.sign==='pos'?' ben':'');
+    const segHTML=(key,opts)=>`<div class="seg" data-ek="${key}">${opts.map(([v,l])=>`<button type="button" data-v="${v}" class="${x[key]===v?'on':''}">${l}</button>`).join('')}</div>`;
+    card.innerHTML = `<div class="ext-head"><span>Externalidad ${i+1}</span>${extState.length>1?`<button type="button" title="Quitar esta externalidad" data-rm="${i}">✕</button>`:''}</div>
+      ${segHTML('sign',[['neg','Negativa (costo)'],['pos','Positiva (beneficio)']])}
+      ${segHTML('origin',[['prod','Producción'],['cons','Consumo']])}
+      ${segHTML('form',[['const','Constante'],['grow','Creciente']])}
+      <div class="field" style="margin-bottom:4px">
+        <label><span>${x.form==='const'?'Efecto por unidad e':'Pendiente g (EMg = g·Q)'}<sub>${i+1}</sub></span><span class="val" data-val></span></label>
+        ${x.form==='const'?`<input type="range" min="0" max="60" step="1" value="${x.e0}" data-in="e0">`:`<input type="range" min="0" max="2" step="0.05" value="${x.e1}" data-in="e1">`}
+      </div>
+      <div class="ex">${SHORT_EX[x.sign+'-'+x.origin]}</div>`;
+    card.querySelectorAll('.seg').forEach(sg=>sg.addEventListener('click',e=>{
+      const btn=e.target.closest('button'); if(!btn) return;
+      x[sg.dataset.ek]=btn.dataset.v; $('preset').value='custom'; buildExtList(); render();
+    }));
+    const inp=card.querySelector('input[type=range]');
+    inp.addEventListener('input',()=>{ x[inp.dataset.in]=+inp.value; $('preset').value='custom'; render(); });
+    const rm=card.querySelector('[data-rm]');
+    if(rm) rm.addEventListener('click',()=>{ extState.splice(i,1); $('preset').value='custom'; buildExtList(); render(); });
+    box.appendChild(card);
+  });
+  $('addExt').disabled = extState.length>=MAX_EXT;
+}
+function updateExtValueLabels(){
+  document.querySelectorAll('#extList .ext-card').forEach((card,i)=>{
+    const x=extState[i], v=card.querySelector('[data-val]');
+    if(v) v.textContent = x.form==='const'? fmt1(x.e0) : fmt2(x.e1);
+  });
+}
+$('addExt').addEventListener('click',()=>{
+  if(extState.length>=MAX_EXT) return;
+  const used=new Set(extState.map(x=>x.sign+x.origin));
+  const cand=[['pos','cons'],['neg','cons'],['pos','prod'],['neg','prod']].find(([s,o])=>!used.has(s+o))||['neg','prod'];
+  extState.push({sign:cand[0],origin:cand[1],form:'const',e0:10,e1:0.4});
+  $('preset').value='custom'; buildExtList(); render();
+});
+$('preset').addEventListener('change',()=>{
+  const k=$('preset').value; if(!PRESETS[k]) return;
+  extState = PRESETS[k].map(x=>Object.assign({},x)); buildExtList(); render();
+});
+
+/* ---------- textos pedagógicos ---------- */
+const EXAMPLES = {
+  'neg-prod': 'Ejemplo: efluentes o emisiones de una actividad industrial o hidrocarburífera que afectan a terceros (vecinos, usuarios del río). El productor decide con CMg<sub>P</sub>, pero el costo para la sociedad es CMg<sub>S</sub> = CMg<sub>P</sub> + CMgE &gt; CMg<sub>P</sub>.',
+  'neg-cons': 'Ejemplo: tabaquismo en espacios compartidos, congestión vehicular o conducción imprudente. El consumidor decide con BMg<sub>P</sub>, pero el beneficio para la sociedad es BMg<sub>S</sub> = BMg<sub>P</sub> − CMgE &lt; BMg<sub>P</sub>.',
+  'pos-prod': 'Ejemplo: apicultura que poliniza los frutales vecinos (Alto Valle), o I+D con derrames tecnológicos. El productor decide con CMg<sub>P</sub>, pero el costo social neto es CMg<sub>S</sub> = CMg<sub>P</sub> − BMgE &lt; CMg<sub>P</sub>.',
+  'pos-cons': 'Ejemplo: vacunación o educación. El consumidor decide con BMg<sub>P</sub>, pero el beneficio social es BMg<sub>S</sub> = BMg<sub>P</sub> + BMgE &gt; BMg<sub>P</sub>.',
+};
+const POWER_DESC = {
+  none: 'Ambos lados son tomadores de precios: la asignación privada surge de BMg<sub>P</sub> = CMg<sub>P</sub>. La única falla de mercado es la externalidad.',
+  seller: 'Un único vendedor iguala ingreso marginal y costo marginal privado, IMg = CMg<sub>P</sub>, y cobra el precio de demanda. Restringe la cantidad: segunda falla de mercado superpuesta a la externalidad.',
+  buyer: 'Un único comprador iguala su beneficio marginal al gasto marginal, BMg<sub>P</sub> = GMg, y paga el precio de oferta. También restringe la cantidad transada.',
+  both: 'Monopolio bilateral: cada lado querría restringir la cantidad; bajo negociación no cooperativa prevalece la menor de las dos cantidades y el precio queda indeterminado entre CMg<sub>P</sub> y BMg<sub>P</sub> (se reparte con β).',
+};
+function extName(s){ return s>0 ? 'CMgE' : 'BMgE'; }
+// términos de la curva social de un lado: consumo resta costos y suma beneficios; producción al revés
+function sideTerms(M, side){
+  const many = M.exts.length>1;
+  return M.exts.map((x,i)=>x.origin!==side?null:
+    ((side==='cons') === (x.s>0) ? '− ' : '+ ') + (x.s>0?'CMgE':'BMgE') + (many?`<sub>${i+1}</sub>`:'')).filter(Boolean).join(' ');
+}
+function polyArea(pts){ let s=0; for(let i=0;i<pts.length;i++){const [x1,y1]=pts[i],[x2,y2]=pts[(i+1)%pts.length]; s+=x1*y2-x2*y1;} return Math.abs(s)/2; }
+function instLabel(k, s){
+  switch(k){
+    case 'none': return 'Sin intervención (equilibrio de mercado)';
+    case 'pigou': return s>0 ? 'Impuesto pigouviano: t = CMgE(Q_OS)' : 'Subsidio pigouviano: s = BMgE(Q_OS)';
+    case 'second': return (s>0?'Impuesto':'Subsidio')+' corregido por poder de mercado (2.º mejor)';
+    case 'manual': return 'Impuesto / subsidio por unidad (manual)';
+    case 'qty': return s>0 ? 'Orden y control: tope de cantidad Q̄ = Q_OS' : 'Orden y control: mínimo obligatorio Q̄ = Q_OS';
+    case 'permits': return s>0 ? 'Permisos transferibles (tope = Q_OS)' : 'Permisos transferibles (no aplica)';
+    case 'coase': return 'Negociación privada (Teorema de Coase)';
+    case 'public': return 'Provisión pública directa (monopolio estatal)';
+  }
+}
+const SHORT = {none:'Sin intervención', pigou:'Pigouviano', second:'Corregido (2.º mejor)', manual:'Cuña manual',
+               qty:'Orden y control', permits:'Permisos transferibles', coase:'Coase', public:'Provisión pública'};
+function instDesc(k, s, M){
+  const tax = s>0 ? 'impuesto' : 'subsidio';
+  switch(k){
+    case 'none': return 'Asignación descentralizada: cada agente decide con sus beneficios y costos privados; el efecto externo no tiene precio.';
+    case 'pigou': return `Se fija un ${tax} por unidad igual al efecto externo marginal valuado en el óptimo social. Es la regla de primer mejor <b>bajo competencia perfecta</b>; supone conocer exactamente ${M&&M.exts.length>1?'el efecto externo marginal <b>neto</b> X(Q<sub>OS</sub>) de todas las externalidades':extName(s)+'(Q<sub>OS</sub>)'}.`;
+    case 'second': return 'Se elige la cuña que lleva el equilibrio <b>de la estructura vigente</b> exactamente a Q<sub>OS</sub>: corrige a la vez la externalidad y la restricción de cantidad por poder de mercado. Puede invertir su signo (Buchanan, 1969).';
+    case 'manual': return 'Explore cualquier cuña por unidad y observe el efecto sobre precios, cantidades y bienestar.';
+    case 'qty': return s>0 ? 'Regulación directa: se prohíbe superar Q̄ = Q<sub>OS</sub>. Solo es efectiva si el mercado produce más que Q<sub>OS</sub>; la renta de escasez queda en manos de quien fija el precio o del lado regulado.'
+                           : 'Regulación directa: se obliga a producir/consumir al menos Q̄ = Q<sub>OS</sub> (p. ej., vacunación obligatoria). El precio lo fija el lado con poder de mercado o, en competencia, el lado no obligado.';
+    case 'permits': return 'Se emiten permisos por Q<sub>OS</sub> unidades de la actividad y se permite su intercambio; el precio del permiso actúa como un impuesto determinado por el mercado. Con subasta la renta es fiscal; con asignación gratuita (grandfathering) queda en el lado generador.';
+    case 'coase': return 'Sin costos de transacción, generadores y afectados negocian hasta igualar el beneficio marginal privado neto del generador con el efecto externo marginal, cualquiera sea la asignación de derechos; esta sólo define quién paga a quién. La negociación internaliza la externalidad, <b>pero no la distorsión de poder de mercado</b>.';
+    case 'public': return 'El Estado sustituye al mercado: produce Q<sub>OS</sub> al costo CMg<sub>P</sub> y lo vende al precio que despeja la demanda, BMg<sub>P</sub>(Q<sub>OS</sub>). El resultado fiscal absorbe el excedente del productor (o su pérdida).';
+  }
+}
+
+/* ---------- lectura de parámetros ---------- */
+function readParams(){
+  const a=+$('a').value, b=+$('b').value, c=+$('c').value, d=+$('d').value;
+  const exts = extState.map(x=>({s:x.sign==='neg'?1:-1, origin:x.origin,
+                                 e0:x.form==='const'?x.e0:0, e1:x.form==='grow'?x.e1:0}));
+  let warn = '';
+  // condición de segundo orden del óptimo social: b + d + X1 > 0, con X1 = Σ s_k·g_k.
+  // Si los beneficios externos crecientes la violan (o casi), se reescalan sus pendientes.
+  const X1 = exts.reduce((t,x)=>t+x.s*x.e1,0), floor=-0.9*(b+d);
+  if(X1 < floor){
+    const negPart = exts.reduce((t,x)=>t+(x.s<0?x.e1:0),0), posPart = exts.reduce((t,x)=>t+(x.s>0?x.e1:0),0);
+    const k = (posPart - floor)/negPart;           // factor que lleva X1 exactamente al piso
+    exts.forEach(x=>{ if(x.s<0) x.e1*=k; });
+    warn = `Con beneficios externos crecientes, si la pendiente neta X<sub>1</sub> = Σ s<sub>k</sub>·g<sub>k</sub> ≤ −(b + d), la curva BMg<sub>S</sub> − CMg<sub>S</sub> deja de ser decreciente y no existe un óptimo interior finito. Se reescalan las pendientes de los beneficios externos crecientes (factor ${fmt2(k)}) para que X<sub>1</sub> = −0,9·(b + d).`;
+  }
+  return {p:{a,b,c,d,exts,power:$('power').value,beta:+$('beta').value}, warn};
+}
+function opts(){ return {tManual:+$('tman').value, rights:seg.rights, auction:$('auction').checked}; }
+
+/* ---------- utilidades SVG ---------- */
+const NS='http://www.w3.org/2000/svg';
+function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(parent) parent.appendChild(e); return e; }
+function txt(parent, x, y, s, attrs={}){ const t=el('text',Object.assign({x,y,'font-size':11,fill:'var(--text-secondary)'},attrs),parent); t.textContent=s; return t; }
+// banda entre dos funciones de Q en [q1,q2] (muestreo fino por seguridad)
+function band(q1,q2,f1,f2,N=40){
+  const pts=[]; for(let i=0;i<=N;i++){const q=q1+(q2-q1)*i/N; pts.push([q,f1(q)]);}
+  for(let i=N;i>=0;i--){const q=q1+(q2-q1)*i/N; pts.push([q,f2(q)]);} return pts;
+}
+function niceStep(range, n){ const raw=range/n, p=Math.pow(10,Math.floor(Math.log10(raw))); const m=raw/p; return (m<1.5?1:m<3?2:m<7?5:10)*p; }
+
+function frame(svg, VBW, VBH, M, Qmax, Pmin, Pmax, xlab, ylab, clipId){
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  const PW=VBW-M.l-M.r, PH=VBH-M.t-M.b;
+  const X = q => M.l + q/Qmax*PW;
+  const Y = p => M.t + PH - (p-Pmin)/(Pmax-Pmin)*PH;
+  const defs = el('defs',{},svg);
+  const cp = el('clipPath',{id:clipId},defs); el('rect',{x:M.l,y:M.t,width:PW,height:PH},cp);
+  const pat = el('pattern',{id:clipId+'-hatch',patternUnits:'userSpaceOnUse',width:7,height:7,patternTransform:'rotate(45)'},defs);
+  el('rect',{width:7,height:7,fill:'var(--ext-fill)'},pat);
+  el('line',{x1:0,y1:0,x2:0,y2:7,stroke:'var(--series-ext)','stroke-width':2.2,'stroke-opacity':.75},pat);
+  const patB = el('pattern',{id:clipId+'-hatchb',patternUnits:'userSpaceOnUse',width:7,height:7,patternTransform:'rotate(-45)'},defs);
+  el('rect',{width:7,height:7,fill:'var(--ben-fill)'},patB);
+  el('line',{x1:0,y1:0,x2:0,y2:7,stroke:'var(--series-ben)','stroke-width':2.2,'stroke-opacity':.75},patB);
+  // grilla
+  const ys=niceStep(Pmax-Pmin,6);
+  for(let p=Math.ceil(Pmin/ys)*ys; p<=Pmax+1e-9; p+=ys){
+    el('line',{x1:M.l,x2:M.l+PW,y1:Y(p),y2:Y(p),stroke:'var(--border)','stroke-width':Math.abs(p)<1e-9?0:1},svg);
+    txt(svg,M.l-6,Y(p)+4,fmt0(p),{'text-anchor':'end','font-size':10,fill:'var(--text-muted)'});
+  }
+  const xs=niceStep(Qmax,8);
+  for(let q=0;q<=Qmax+1e-9;q+=xs){
+    el('line',{x1:X(q),x2:X(q),y1:M.t,y2:M.t+PH,stroke:'var(--border)'},svg);
+    txt(svg,X(q),M.t+PH+14,fmt0(q),{'text-anchor':'middle','font-size':10,fill:'var(--text-muted)'});
+  }
+  el('rect',{x:M.l,y:M.t,width:PW,height:PH,fill:'none',stroke:'var(--border-strong)'},svg);
+  if(Pmin<0) el('line',{x1:M.l,x2:M.l+PW,y1:Y(0),y2:Y(0),stroke:'var(--text-muted)','stroke-width':1.3},svg);
+  txt(svg,M.l+PW/2,VBH-4,xlab,{'text-anchor':'middle','font-size':12});
+  const yl=txt(svg,13,M.t+PH/2,ylab,{'text-anchor':'middle','font-size':12,transform:`rotate(-90 13 ${M.t+PH/2})`});
+  const data = el('g',{'clip-path':`url(#${clipId})`},svg);
+  const top = el('g',{},svg);
+  return {X,Y,data,top,PW,PH,M,Qmax,Pmin,Pmax,hatch:`url(#${clipId}-hatch)`, hatchB:`url(#${clipId}-hatchb)`};
+}
+function poly(F, pts, fill, stroke, extra={}){
+  if(pts.length<3) return;
+  el('polygon',Object.assign({points:pts.map(([q,p])=>`${F.X(q)},${F.Y(p)}`).join(' '),fill,stroke:stroke||'none','stroke-width':1,'stroke-opacity':.5},extra),F.data);
+}
+function line(F, f, color, w=2.4, dash=null, q0=0, q1=null){
+  q1 = q1===null ? F.Qmax : q1;
+  const a={x1:F.X(q0),y1:F.Y(f(q0)),x2:F.X(q1),y2:F.Y(f(q1)),stroke:color,'stroke-width':w};
+  if(dash) a['stroke-dasharray']=dash;
+  el('line',a,F.data);
+}
+// etiqueta de curva: busca el primer Q (desde la derecha) en que la curva cae dentro del marco
+function curveLabel(F, f, s, color, prefer=0.93, dy=-6, anchor='end'){
+  for(let k=0;k<40;k++){
+    const fr = prefer - k*0.02; if(fr<0.05) break;
+    const q=F.Qmax*fr, p=f(q);
+    const lo=F.Pmin+(F.Pmax-F.Pmin)*0.05, hi=F.Pmax-(F.Pmax-F.Pmin)*0.06;
+    if(p>lo && p<hi){ txt(F.top,F.X(q),F.Y(p)+dy,s,{'text-anchor':anchor,'font-size':11.5,'font-weight':700,fill:color}); return; }
+  }
+}
+function dot(F, q, p, label, opt={}){
+  const x=F.X(q), y=F.Y(p);
+  if(x<F.M.l-1||x>F.M.l+F.PW+1||y<F.M.t-1||y>F.M.t+F.PH+1) return;
+  if(opt.ghost) el('circle',{cx:x,cy:y,r:4,fill:'var(--surface-1)',stroke:opt.color||'var(--text-secondary)','stroke-width':1.6},F.top);
+  else if(opt.diamond) el('rect',{x:x-5,y:y-5,width:10,height:10,fill:opt.color||'var(--series-social)',stroke:'var(--surface-1)','stroke-width':1.2,transform:`rotate(45 ${x} ${y})`},F.top);
+  else el('circle',{cx:x,cy:y,r:5,fill:opt.color||'var(--text-primary)',stroke:'var(--surface-1)','stroke-width':1.2},F.top);
+  if(label){
+    const t=txt(F.top,x+(opt.dx??8),y+(opt.dy??-8),'',{'font-size':11.5,'font-weight':700,fill:opt.color||'var(--text-primary)','text-anchor':opt.anchor||'start'});
+    const [base,sub]=label.split('_');
+    const t1=el('tspan',{},t); t1.textContent=base;
+    if(sub){ const t2=el('tspan',{'baseline-shift':'sub','font-size':8.5},t); t2.textContent=sub; }
+  }
+}
+function guide(F, q, p, color='var(--text-muted)'){
+  el('line',{x1:F.X(q),x2:F.X(q),y1:F.Y(p),y2:F.M.t+F.PH,stroke:color,'stroke-width':1,'stroke-dasharray':'3 3'},F.data);
+}
+function axisTag(F, q, label, row, color){
+  const x=F.X(q); if(x<F.M.l||x>F.M.l+F.PW) return;
+  F.tags = F.tags || [];
+  // asigna la primera fila libre (sin otra etiqueta a menos de 30 px)
+  let rr=0; while(F.tags.some(t=>t.row===rr && Math.abs(t.x-x)<30) && rr<3) rr++;
+  F.tags.push({x,row:rr});
+  const y=F.M.t+F.PH+27+rr*11;
+  const t=txt(F.top,x,y,'',{'text-anchor':'middle','font-size':10.5,'font-weight':700,fill:color||'var(--text-primary)'});
+  const [base,sub]=label.split('_'); const t1=el('tspan',{},t); t1.textContent=base;
+  if(sub){ const t2=el('tspan',{'baseline-shift':'sub','font-size':8},t); t2.textContent=sub; }
+}
+
+/* ---------- leyendas ---------- */
+function legend(id, items){
+  const box=$(id); box.innerHTML='';
+  items.forEach(it=>{
+    const d=document.createElement('div'); d.className='legend-item';
+    const sw=document.createElement('span');
+    if(it.kind==='line'){ sw.className='sw line'; sw.style.background=it.color; }
+    else if(it.kind==='dash'){ sw.className='sw dash'; sw.style.borderTopColor=it.color; }
+    else if(it.kind==='hatch'){ sw.className='sw'; sw.style.background=`repeating-linear-gradient(45deg, var(--series-ext) 0 2px, var(--ext-fill) 2px 5px)`; }
+    else if(it.kind==='hatchB'){ sw.className='sw'; sw.style.background=`repeating-linear-gradient(-45deg, var(--series-ben) 0 2px, var(--ben-fill) 2px 5px)`; }
+    else if(it.kind==='dot'){ sw.className='sw dash'; sw.style.borderTopColor=it.color; sw.style.borderTopStyle='dotted'; }
+    else { sw.className='sw'; sw.style.background=it.color; sw.style.opacity=.6; }
+    d.appendChild(sw); const s=document.createElement('span'); s.innerHTML=it.label; d.appendChild(s); box.appendChild(d);
+  });
+}
+
+/* ---------- selector de instrumento ---------- */
+const INST_KEYS = Object.keys(INSTRUMENTS);
+function refreshInstOptions(s){
+  const sel=$('inst'), cur=sel.value||'pigou';
+  sel.innerHTML='';
+  INST_KEYS.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=instLabel(k,s); if(k==='permits'&&s<0) o.disabled=true; sel.appendChild(o); });
+  sel.value = (cur==='permits'&&s<0) ? 'pigou' : cur;
+}
+
+/* ============================================================
+   RENDER PRINCIPAL
+   ============================================================ */
+let lastSign = null;
+function render(){
+  const {p, warn} = readParams();
+  const M = buildModel(p);
+  const s = M.s;
+  if(lastSign!==s){ refreshInstOptions(s); lastSign=s; }
+  const inst = $('inst').value;
+  const o = opts();
+
+  // etiquetas de controles
+  $('av').textContent=fmt0(p.a); $('bv').textContent=fmt2(p.b); $('cv').textContent=fmt0(p.c); $('dv').textContent=fmt2(p.d);
+  updateExtValueLabels();
+  $('betav').textContent=fmt2(p.beta); $('tmanv').textContent=(o.tManual>0?'impuesto ':o.tManual<0?'subsidio ':'')+fmt1(Math.abs(o.tManual));
+  $('f-beta').style.display = p.power==='both'?'':'none';
+  $('f-tman').style.display = inst==='manual'?'':'none';
+  $('f-rights').style.display = (inst==='coase'&&s>0)?'':'none';
+  $('f-auction').style.display = inst==='permits'?'':'none';
+  $('powerDesc').innerHTML = POWER_DESC[p.power];
+  $('instDesc').innerHTML = instDesc(inst,s,M);
+  $('extWarn').style.display = warn?'':'none'; $('extWarn').innerHTML = warn;
+
+  // escenarios
+  const all = {}; INST_KEYS.forEach(k=>{ all[k]=scenario(M,k,o); });
+  const r = all[inst];
+  const rNone = all.none;
+  const Mc = buildModel(Object.assign({},p,{power:'none'}));
+  const QC = Mc.solveQ(0), PC = Mc.BMgP(QC);
+  const QOS = M.QOS, POS = M.CMgS(QOS);
+  const show = {surplus:$('showSurplus').checked, dwl:$('showDWL').checked, ext:$('showExt').checked, mr:$('showMR').checked, ref:$('showRef').checked};
+
+  drawMain(M, r, rNone, {QC,PC,QOS,POS}, inst, show);
+  drawExt(M, r, rNone, {QC,QOS}, inst, show);
+  renderFormulas(M, r, inst);
+  renderResults(M, r, inst);
+  renderRefs(M, rNone, {QC,PC,QOS,POS});
+  renderCompare(M, all, inst);
+  renderInterp(M, r, rNone, {QC,PC,QOS,POS}, inst);
+}
+
+/* ---------- gráfico 1: mercado del bien ---------- */
+function drawMain(M, r, rNone, R, inst, show){
+  const s=M.s;
+  const ok = r.ok;
+  const Qs = [R.QC, R.QOS, rNone.Q, ok?r.Q:0].filter(isFinite);
+  const Qmax = Math.max(...Qs, 1)*1.3;
+  const vals = [M.a, M.BMgS(0), M.CMgP(Qmax*0.95), M.CMgS(Qmax*0.95), R.PC, R.POS, rNone.Pb];
+  if(ok){ vals.push(r.Pb); if(r.Ps!==null) vals.push(r.Ps); }
+  let Pmax = Math.max(...vals)*1.08;
+  let mins = [0, M.CMgS(0), M.BMgS(Math.max(...Qs)), M.CMgP(0)];
+  if(ok){ mins.push(r.Pb); if(r.Ps!==null) mins.push(r.Ps); }
+  let Pmin = Math.min(...mins); Pmin = Pmin<0 ? Math.max(Pmin*1.15, -0.6*Pmax) : 0;
+  const F = frame($('chartMain'),760,488,{l:56,r:18,t:16,b:76},Qmax,Pmin,Pmax,'Cantidad (Q)','$ por unidad','clipMain');
+  const L = [];
+
+  if(ok){
+    const Q=r.Q, Pb=r.Pb, Ps=r.Ps;
+    if(show.surplus){
+      poly(F, band(0,Q,M.BMgP,()=>Pb), 'var(--cs-fill)', 'var(--series-demand)'); L.push({label:'Excedente del consumidor (EC)',color:'var(--series-demand)'});
+      if(Ps!==null){ poly(F, band(0,Q,()=>Ps,M.CMgP), 'var(--ps-fill)', 'var(--series-supply)'); L.push({label:'Excedente del productor (EP)',color:'var(--series-supply)'}); }
+      if(r.publicProv){ poly(F, band(0,Q,()=>Pb,M.CMgP), 'var(--gov-fill)', 'var(--series-gov)'); L.push({label:'Resultado fiscal de la empresa pública',color:'var(--series-gov)'}); }
+      else if(Math.abs(Pb-Ps)>1e-6){
+        const isRent = inst==='permits' && !r.auction;
+        poly(F, [[0,Pb],[Q,Pb],[Q,Ps],[0,Ps]], isRent?'var(--rent-fill)':'var(--gov-fill)', isRent?'var(--series-social)':'var(--series-gov)');
+        L.push({label: isRent?'Renta de permisos (lado generador)': (r.gov>=0?'Recaudación fiscal':'Costo fiscal del subsidio'), color:isRent?'var(--series-social)':'var(--series-gov)'});
+      }
+    }
+    if(show.ext && Q>0){
+      // cada lado (consumo / producción) con su efecto neto; costo y beneficio con rayados distintos
+      let anyCost=false, anyBen=false;
+      const sides=[];
+      if(M.hasCons) sides.push([M.BMgP, M.Xc]);  // BMgS = BMgP − Xc
+      if(M.hasProd) sides.push([M.CMgP, M.Xp]);  // CMgS = CMgP + Xp
+      sides.forEach(([priv, Xs])=>{
+        const cPts = band(0,Q,priv,q=>priv(q)+(Xs===M.Xc?-1:1)*Math.max(0,Xs(q)));
+        const bPts = band(0,Q,priv,q=>priv(q)+(Xs===M.Xc?-1:1)*Math.min(0,Xs(q)));
+        if(polyArea(cPts)>1e-9){ poly(F,cPts,F.hatch,'var(--series-ext)'); anyCost=true; }
+        if(polyArea(bPts)>1e-9){ poly(F,bPts,F.hatchB,'var(--series-ben)'); anyBen=true; }
+      });
+      if(anyCost) L.push({kind:'hatch',label:'Daño externo total (costo para terceros)'});
+      if(anyBen)  L.push({kind:'hatchB',label:'Beneficio externo total (para terceros)'});
+    }
+    if(show.dwl && r.PIE>1e-6*Math.max(1,Math.abs(r.Wmax))){
+      poly(F, band(Math.min(Q,R.QOS),Math.max(Q,R.QOS),M.BMgS,M.CMgS), 'var(--dwl-fill)', 'var(--series-dwl)', {'stroke-opacity':.8});
+      L.push({label:'Pérdida irrecuperable de eficiencia (PIE)',color:'var(--series-dwl)'});
+    }
+  }
+
+  // curvas
+  if(show.mr && (M.power==='seller'||M.power==='both')){ line(F,M.IMg,'var(--series-demand)',1.4,'6 4'); curveLabel(F,M.IMg,'IMg','var(--series-demand)',0.5,-6,'start'); L.push({kind:'dash',color:'var(--series-demand)',label:'Ingreso marginal (IMg)'}); }
+  if(show.mr && (M.power==='buyer'||M.power==='both')){ line(F,M.GMg,'var(--series-supply)',1.4,'6 4'); curveLabel(F,M.GMg,'GMg','var(--series-supply)',0.6,-6,'start'); L.push({kind:'dash',color:'var(--series-supply)',label:'Gasto marginal (GMg)'}); }
+  if(show.mr && ok && Math.abs(r.t)>1e-6 && ['pigou','second','manual','permits'].includes(inst)){
+    const ft = q => M.CMgP(q)+r.t;
+    line(F, ft, 'var(--series-supply)', 1.4, '2 3'); curveLabel(F, ft, r.t>0?'CMgP + t':'CMgP − s', 'var(--series-supply)', 0.72, -6);
+    L.push({kind:'dash',color:'var(--series-supply)',label: r.t>0?'CMg<sub>P</sub> + t (oferta con impuesto)':'CMg<sub>P</sub> − s (oferta con subsidio)'});
+  }
+  line(F, M.BMgP, 'var(--series-demand)', 2.6);
+  line(F, M.CMgP, 'var(--series-supply)', 2.6);
+  const qL=Qmax*0.86;
+  const bmgsBelow = M.Xc(qL)>0, cmgsAbove = M.Xp(qL)>0;
+  if(M.hasCons){ line(F, M.BMgS, 'var(--series-social)', 2.8, '9 5'); curveLabel(F, M.BMgS, 'BMgS', 'var(--series-social)', 0.86, bmgsBelow?14:-8); }
+  if(M.hasProd){ line(F, M.CMgS, 'var(--series-social)', 2.8, M.hasCons?'3 4':'9 5'); curveLabel(F, M.CMgS, 'CMgS', 'var(--series-social)', 0.80, cmgsAbove?-8:14); }
+  curveLabel(F, M.BMgP, M.hasCons?'D = BMgP':'D = BMgP = BMgS', 'var(--series-demand)', 0.97, (M.hasCons && bmgsBelow)?-8:14);
+  curveLabel(F, M.CMgP, M.hasProd?'O = CMgP':'O = CMgP = CMgS', 'var(--series-supply)', 0.97, (!M.hasProd || cmgsAbove)?16:-8);
+  const socItems=[];
+  if(M.hasCons) socItems.push({kind:'dash',color:'var(--series-social)',label:'BMg<sub>S</sub> = BMg<sub>P</sub> '+sideTerms(M,'cons')});
+  if(M.hasProd) socItems.push({kind:M.hasCons?'dot':'dash',color:'var(--series-social)',label:'CMg<sub>S</sub> = CMg<sub>P</sub> '+sideTerms(M,'prod')});
+  L.unshift({kind:'line',color:'var(--series-demand)',label:'Demanda: BMg<sub>P</sub>'+(M.hasCons?'':' = BMg<sub>S</sub>')},
+            {kind:'line',color:'var(--series-supply)',label:'Oferta: CMg<sub>P</sub>'+(M.hasProd?'':' = CMg<sub>S</sub>')}, ...socItems);
+
+  // puntos de referencia
+  if(show.ref){
+    if(M.power!=='none') { dot(F,R.QC,R.PC,'E_C',{ghost:true,color:'var(--text-secondary)'}); }
+    if(inst!=='none' || !ok) dot(F,rNone.Q,rNone.Pb,'E_M',{ghost:true,color:'var(--text-primary)',dx:-8,anchor:'end'});
+    dot(F,R.QOS,R.POS,'E_OS',{diamond:true,color:'var(--series-social)',dy:16});
+    guide(F,R.QOS,R.POS,'var(--series-social)');
+    axisTag(F,R.QOS,'Q_OS',0,'var(--series-social)');
+    guide(F,rNone.Q,rNone.Pb); axisTag(F,rNone.Q,'Q_M',1,'var(--text-primary)');
+    if(M.power!=='none'){ guide(F,R.QC,R.PC); axisTag(F,R.QC,'Q_C',2,'var(--text-secondary)'); }
+  }
+  if(ok){
+    if(inst==='none'){ dot(F,r.Q,r.Pb,'E_M',{}); }
+    else {
+      guide(F,r.Q,Math.max(r.Pb, r.Ps??r.Pb),'var(--text-primary)');
+      if(r.Ps!==null && Math.abs(r.Pb-r.Ps)>1e-6){ dot(F,r.Q,r.Pb,'P_c',{color:'var(--series-demand)',dx:-8,anchor:'end',dy:r.Pb>=r.Ps?-8:14}); dot(F,r.Q,r.Ps,'P_v',{color:'var(--series-supply)',dx:-8,anchor:'end',dy:r.Pb>=r.Ps?14:-8}); }
+      else dot(F,r.Q,r.Pb,'E*',{});
+      axisTag(F,r.Q,'Q*',show.ref?(M.power!=='none'?3:2):0,'var(--text-primary)');
+    }
+  }
+  legend('legendMain', L);
+}
+
+/* ---------- gráfico 2: espacio de la externalidad ---------- */
+function drawExt(M, r, rNone, R, inst, show){
+  const s=M.s, ok=r.ok;
+  const BMN = q => M.BMgP(q) - M.CMgP(q);
+  const Xf = M.X;                              // efecto externo marginal neto con signo
+  const many = M.exts.length>1;
+  const compF = M.exts.map(x => q => x.s*(x.e0 + x.e1*q));
+  const percs = M.power==='none' ? [] : M.structs.map(([mb,md]) => q => (M.a-M.c) - (mb*M.b+md*M.d)*q);
+  const Qs=[R.QC,R.QOS,rNone.Q, ok?r.Q:0].filter(isFinite);
+  const Qmax=Math.max(...Qs,1)*1.3;
+  const v=[M.a-M.c, Xf(0), Xf(Qmax), 0]; if(ok && r.t) v.push(r.t);
+  if(many) compF.forEach(f=>v.push(f(0),f(Qmax)));
+  let Pmax=Math.max(...v), Pmin=Math.min(...v, BMN(Math.max(...Qs)*1.1));
+  const span=Pmax-Pmin||1; Pmax+=span*0.1; Pmin-=span*0.08;
+  const F=frame($('chartExt'),760,320,{l:56,r:18,t:14,b:70},Qmax,Pmin,Pmax,'Cantidad de la actividad (Q)','$ por unidad','clipExt');
+  const L=[];
+  if(ok){
+    if(show.ext && r.Q>0){
+      const cP=band(0,r.Q,()=>0,q=>Math.max(0,Xf(q))), bP=band(0,r.Q,()=>0,q=>Math.min(0,Xf(q)));
+      if(polyArea(cP)>1e-9){ poly(F,cP,F.hatch,'var(--series-ext)'); L.push({kind:'hatch',label:many?'Daño externo neto':'Daño externo total'}); }
+      if(polyArea(bP)>1e-9){ poly(F,bP,F.hatchB,'var(--series-ben)'); L.push({kind:'hatchB',label:many?'Beneficio externo neto':'Beneficio externo total'}); }
+    }
+    if(show.dwl && r.PIE>1e-6*Math.max(1,Math.abs(r.Wmax))){ poly(F, band(Math.min(r.Q,R.QOS),Math.max(r.Q,R.QOS),BMN,Xf), 'var(--dwl-fill)','var(--series-dwl)',{'stroke-opacity':.8}); L.push({label:'PIE',color:'var(--series-dwl)'}); }
+  }
+  // líneas
+  if(ok && ['pigou','second','manual','permits'].includes(inst)){
+    el('line',{x1:F.X(0),x2:F.X(Qmax),y1:F.Y(r.t),y2:F.Y(r.t),stroke:'var(--series-gov)','stroke-width':1.8,'stroke-dasharray':'7 4'},F.data);
+    txt(F.top,F.X(0)+6,F.Y(r.t)+(r.t>=0?14:-5),(inst==='permits'?'precio del permiso = ':(r.t>=0?'t = ':'−s = '))+fmt1(r.t),{'text-anchor':'start','font-size':11,'font-weight':700,fill:'var(--series-gov)'});
+    L.push({kind:'dash',color:'var(--series-gov)',label: inst==='permits'?'Precio del permiso':'Cuña del instrumento (t o −s)'});
+  }
+  percs.forEach((f,i)=>{ line(F,f,'var(--series-net)',1.4,'5 4'); });
+  if(percs.length){ const [mb,md]=M.structs[0]; const q0=(M.a-M.c)/(mb*M.b+md*M.d); curveLabel(F,percs[0],'BMN percibido','var(--series-net)',Math.max(0.1,0.55*q0/Qmax),16,'end'); L.push({kind:'dash',color:'var(--series-net)',label:'BMN percibido con poder de mercado (IMg − CMg<sub>P</sub> o BMg<sub>P</sub> − GMg)'}); }
+  line(F,BMN,'var(--series-net)',2.4);
+  if(many) compF.forEach((f,i)=>{ const col=M.exts[i].s>0?'var(--series-ext)':'var(--series-ben)'; line(F,f,col,1.3,'2 3');
+      curveLabel(F,f,(M.exts[i].s>0?'CMgE':'−BMgE')+(i+1),col,0.99-0.07*i,M.exts[i].s>0?-5:12); });
+  const netCol = (Xf(Qmax*0.5)>=0)?'var(--series-ext)':'var(--series-ben)';
+  line(F,Xf,netCol,2.6);
+  curveLabel(F,BMN,'BMgP − CMgP','var(--series-net)',0.24,-8,'start');
+  curveLabel(F,Xf,many?'X(Q) neto':(s>0?'CMgE':'−BMgE'),netCol,0.72,Xf(Qmax*0.72)>=0?-8:14);
+  if(many) L.push({kind:'dot',color:'var(--text-muted)',label:'Componentes: CMgE<sub>k</sub> (costos) y −BMgE<sub>k</sub> (beneficios)'});
+  L.unshift({kind:'line',color:'var(--series-net)',label:'Beneficio marginal neto privado BMN = BMg<sub>P</sub> − CMg<sub>P</sub>'},
+            {kind:'line',color:netCol,label: many?'Efecto externo marginal neto X(Q) = Σ CMgE<sub>k</sub> − Σ BMgE<sub>k</sub>':(s>0?'Costo marginal externo CMgE(Q)':'Beneficio marginal externo con signo invertido, −BMgE(Q)')});
+  // puntos
+  dot(F,R.QOS,Xf(R.QOS),'OS',{diamond:true,color:'var(--series-social)',dy:s>0?-10:16});
+  axisTag(F,R.QOS,'Q_OS',0,'var(--series-social)');
+  dot(F,rNone.Q,0,'M',{ghost:true,dy:-8}); axisTag(F,rNone.Q,'Q_M',1,'var(--text-primary)');
+  if(M.power!=='none'){ dot(F,R.QC,0,'C',{ghost:true,color:'var(--text-secondary)',dy:14}); axisTag(F,R.QC,'Q_C',2,'var(--text-secondary)'); }
+  if(ok && inst!=='none'){ guide(F,r.Q,Math.max(0,BMN(r.Q)),'var(--text-primary)'); dot(F,r.Q,BMN(r.Q),'',{}); axisTag(F,r.Q,'Q*',M.power!=='none'?3:2); }
+  legend('legendExt', L);
+}
+
+/* ---------- fórmulas ---------- */
+function renderFormulas(M, r, inst){
+  const s=M.s, many=M.exts.length>1;
+  // descripción de cada externalidad y de las curvas sociales resultantes
+  const emg = M.exts.map((x,i)=>{
+    const nm=(x.s>0?'CMgE':'BMgE')+(many?`<sub>${i+1}</sub>`:'');
+    return `${nm}(Q) = ${x.e1>0?fmt2(x.e1)+'·Q':fmt1(x.e0)} <span style="color:var(--text-muted)">(${x.s>0?'costo':'beneficio'}, ${x.origin==='prod'?'producción':'consumo'})</span>`;
+  }).join(' &nbsp;·&nbsp; ');
+  const socParts=[]; if(M.hasCons) socParts.push('BMg<sub>S</sub> = BMg<sub>P</sub> '+sideTerms(M,'cons')); if(M.hasProd) socParts.push('CMg<sub>S</sub> = CMg<sub>P</sub> '+sideTerms(M,'prod'));
+  const soc = socParts.join(' &nbsp;·&nbsp; ');
+  const cond = {
+    none:'BMg<sub>P</sub> = CMg<sub>P</sub> + t &nbsp;⇒&nbsp; Q = (a − c − t)/(b + d)',
+    seller:'IMg = a − 2bQ = CMg<sub>P</sub> + t &nbsp;⇒&nbsp; Q = (a − c − t)/(2b + d)',
+    buyer:'BMg<sub>P</sub> = GMg + t, con GMg = c + 2dQ &nbsp;⇒&nbsp; Q = (a − c − t)/(b + 2d)',
+    both:'Q = mín{(a − c − t)/(2b + d), (a − c − t)/(b + 2d)} &nbsp;(lado corto)',
+  }[M.power];
+  const lines = [
+    `<div class="line">BMg<sub>P</sub>(Q) = ${fmt0(M.a)} − ${fmt2(M.b)}Q &nbsp;·&nbsp; CMg<sub>P</sub>(Q) = ${fmt0(M.c)} + ${fmt2(M.d)}Q</div>`,
+    `<div class="line">${emg}</div>`,
+    `<div class="line">${soc}${many?` &nbsp;·&nbsp; efecto neto X(Q) = ${fmt2(M.X0)} ${M.X1>=0?'+':'−'} ${fmt2(Math.abs(M.X1))}·Q`:''}</div>`,
+    `<div class="line">Equilibrio de mercado (condición privada): ${cond}</div>`,
+    `<div class="line">Óptimo social: <em>BMg<sub>S</sub> = CMg<sub>S</sub></em> &nbsp;⇒&nbsp; Q<sub>OS</sub> = (a − c − X<sub>0</sub>)/(b + d + X<sub>1</sub>) = <em>${fmt2(M.QOS)}</em> &nbsp;(SOC: b + d + X<sub>1</sub> = ${fmt2(M.denOS)} &gt; 0; X<sub>0</sub>, X<sub>1</sub>: ordenada y pendiente del efecto externo neto con signo)</div>`,
+  ];
+  if(r.ok){
+    let extra='';
+    switch(inst){
+      case 'pigou': extra=`Cuña pigouviana: t = X(Q<sub>OS</sub>) ${many?'(efecto externo marginal neto)':''} = <em>${fmt2(r.t)}</em> ⇒ Q = ${fmt2(r.Q)}${Math.abs(r.Q-M.QOS)>1e-6?' ≠ Q<sub>OS</sub> (el poder de mercado no está corregido)':' = Q<sub>OS</sub>'}`; break;
+      case 'second': extra=`Cuña de 2.º mejor: t* = (a − c) − (m<sub>v</sub>b + m<sub>c</sub>d)·Q<sub>OS</sub> = BMg<sub>P</sub>(Q<sub>OS</sub>) − CMg<sub>P</sub>(Q<sub>OS</sub>) − [ajuste por poder de mercado] = <em>${fmt2(r.t)}</em>${r.t<0&&s>0?' <span class="badge loss">subsidio a pesar del daño externo</span>':''}`; break;
+      case 'manual': extra=`Cuña elegida t = ${fmt2(r.t)} ⇒ Q = ${fmt2(r.Q)}, P<sub>c</sub> = ${fmt2(r.Pb)}, P<sub>v</sub> = ${fmt2(r.Ps)}`; break;
+      case 'qty': extra= r.binding?`Q̄ = Q<sub>OS</sub> = ${fmt2(r.Q)} es <em>restrictivo</em>; precio = ${fmt2(r.Pb)}`:`Q̄ = Q<sub>OS</sub> <em>no es restrictivo</em>: el mercado ya opera ${s>0?'por debajo':'por encima'} de Q<sub>OS</sub>`; break;
+      case 'permits': extra= r.binding?`Precio de equilibrio del permiso r = <em>${fmt2(r.t)}</em> (cuña que hace Q = Q̄); renta total r·Q̄ = ${fmt1(r.t*r.Q)} ${r.auction?'(fiscal)':'(lado generador)'}`:'El tope no es restrictivo: el precio del permiso es cero.'; break;
+      case 'coase': extra=`Negociación: el generador iguala su BMN percibido con ${many?'X(Q)':(s>0?'CMgE(Q)':'−BMgE(Q)')} ⇒ Q = <em>${fmt2(r.Q)}</em>; transferencia mínima ${r.transferDir}: ${fmt1(r.transfer)}`; break;
+      case 'public': extra=`Q = Q<sub>OS</sub> = ${fmt2(r.Q)}; precio que despeja la demanda BMg<sub>P</sub>(Q<sub>OS</sub>) = ${fmt2(r.Pb)}; resultado fiscal = P·Q − ∫CMg<sub>P</sub> = ${fmt1(r.gov)}`; break;
+    }
+    if(extra) lines.push(`<div class="line">${extra}</div>`);
+  }
+  $('formulaBox').innerHTML = lines.join('');
+}
+
+/* ---------- tabla de resultados ---------- */
+function renderResults(M, r, inst){
+  const tb=$('resTable');
+  if(!r.ok){ tb.innerHTML=`<tr><td><div class="warn">${r.msg}</div></td></tr>`; return; }
+  const s=M.s;
+  const rows=[];
+  rows.push(['Cantidad Q*', fmt2(r.Q)]);
+  if(r.Ps===null) rows.push(['Precio al consumidor', fmt2(r.Pb)]);
+  else if(Math.abs(r.Pb-r.Ps)>1e-6){ rows.push(['Precio del comprador P<sub>c</sub>', fmt2(r.Pb)]); rows.push(['Precio del vendedor P<sub>v</sub>', fmt2(r.Ps)]); }
+  else rows.push(['Precio P', fmt2(r.Pb)]);
+  rows.push(['<hr style="border:none;margin:0">','']);
+  const cls = v => v<-1e-6?'neg':'';
+  rows.push(['Excedente del consumidor (EC)', `<span class="${cls(r.CS)}">${fmt1(r.CS)}</span>`]);
+  rows.push([r.publicProv?'Excedente del productor privado':'Excedente del productor (EP)', `<span class="${cls(r.PS)}">${fmt1(r.PS)}</span>`]);
+  rows.push([r.gov>=0?'Fisco: recaudación / resultado':'Fisco: costo del subsidio / déficit', `<span class="${cls(r.gov)}">${fmt1(r.gov)}</span>`]);
+  if(M.exts.length>1){
+    M.exts.forEach((x,i)=>rows.push([`&nbsp;&nbsp;Ext. ${i+1}: ${x.s>0?'daño':'beneficio'} (${x.origin==='prod'?'producción':'consumo'})`, `<span class="${r.comps[i]<-1e-9?'neg':'pos'}">${sgn1(r.comps[i])}</span>`]));
+    rows.push(['Efecto externo neto (terceros)', `<span class="${r.Ext<-1e-9?'neg':'pos'}">${sgn1(r.Ext)}</span>`]);
+  } else rows.push([s>0?'Daño externo (terceros)':'Beneficio externo (terceros)', `<span class="${s>0?'neg':'pos'}">${sgn1(r.Ext)}</span>`]);
+  if(inst==='coase') rows.push([`Transferencia de Coase<br><span class="hint">${r.transferDir} (no altera W)</span>`, fmt1(r.transfer)]);
+  let html = '<tbody>'+rows.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('');
+  html += `<tr class="total"><td>Bienestar social W</td><td>${fmt1(r.W)}</td></tr>`;
+  html += `<tr><td>Bienestar máximo W<sub>máx</sub> (en Q<sub>OS</sub>)</td><td>${fmt1(r.Wmax)}</td></tr>`;
+  const pie = r.PIE>1e-6*Math.max(1,Math.abs(r.Wmax)) ? `<span class="badge loss">${fmt1(r.PIE)}</span>` : '<span class="badge gain">0 — asignación eficiente</span>';
+  html += `<tr><td>PIE = W<sub>máx</sub> − W</td><td>${pie}</td></tr>`;
+  if(isFinite(r.eff)) html += `<tr><td>Eficiencia W / W<sub>máx</sub></td><td>${(r.eff*100).toLocaleString('es-AR',{maximumFractionDigits:1})}%</td></tr>`;
+  tb.innerHTML = html+'</tbody>';
+}
+function renderRefs(M, rNone, R){
+  const rows = [
+    ['E<sub>C</sub>: competencia, sin intervención', R.QC, R.PC],
+    ['E<sub>M</sub>: estructura vigente, sin intervención', rNone.Q, rNone.Pb],
+    ['E<sub>OS</sub>: óptimo social', R.QOS, R.POS],
+  ];
+  if(M.power==='none') rows.splice(0,1);
+  $('refTable').innerHTML = `<caption>P<sub>OS</sub> = BMg<sub>S</sub>(Q<sub>OS</sub>) = CMg<sub>S</sub>(Q<sub>OS</sub>). ${M.power==='buyer'?'En E<sub>M</sub> el precio es el de oferta.':''}</caption>`+
+    '<thead><tr><th></th><th>Q</th><th>P</th></tr></thead><tbody>'+
+    rows.map(x=>`<tr><td>${x[0]}</td><td>${fmt2(x[1])}</td><td>${fmt2(x[2])}</td></tr>`).join('')+'</tbody>';
+}
+
+/* ---------- contraste de instrumentos ---------- */
+function renderCompare(M, all, inst){
+  const head='<thead><tr><th>Medida</th><th>Q</th><th>P<sub>c</sub></th><th>Cuña</th><th>Fisco</th><th>W</th><th>PIE</th><th>% eficiencia</th></tr></thead>';
+  const Wmax = M.Wof(M.QOS);
+  const body = INST_KEYS.map(k=>{
+    const r=all[k];
+    if(!r.ok) return `<tr class="na" data-k="${k}"><td>${SHORT[k]}</td><td colspan="7">no aplica con externalidad positiva</td></tr>`;
+    const eff = Wmax>0 ? Math.max(0,r.W/Wmax) : NaN;
+    const wedge = (r.Ps!==null && Math.abs(r.Pb-r.Ps)>1e-6) ? fmt1(r.Pb-r.Ps) : '—';
+    return `<tr data-k="${k}" class="${k===inst?'sel':''}"><td>${SHORT[k]}</td><td>${fmt1(r.Q)}</td><td>${fmt1(r.Pb)}</td><td>${wedge}</td><td>${fmt1(r.gov)}</td><td>${fmt1(r.W)}</td><td class="${r.PIE>0.05?'neg':''}">${fmt1(r.PIE)}</td>
+            <td>${isFinite(eff)?`<span class="bar-wrap"><div class="bar" style="width:${Math.min(100,eff*100)}%;${eff<0.999?'background:var(--series-dwl)':''}"></div></span> ${(eff*100).toFixed(1)}%`:'—'}</td></tr>`;
+  }).join('');
+  $('compareTable').innerHTML = head+'<tbody>'+body+'</tbody>';
+  $('compareTable').querySelectorAll('tbody tr').forEach(tr=>{
+    if(tr.classList.contains('na')) return;
+    tr.addEventListener('click',()=>{ $('inst').value=tr.dataset.k; render(); });
+  });
+}
+
+/* ---------- lectura económica automática ---------- */
+function renderInterp(M, r, rNone, R, inst){
+  const s=M.s, P=[];
+  const orig = M.origin==='cons'?'consumo':'producción';
+  if(R.QOS<=1e-9) P.push('<p><b>El óptimo social es Q<sub>OS</sub> = 0:</b> el efecto externo supera el beneficio neto privado de toda unidad; la política eficiente es prohibir la actividad.</p>');
+  const dir = R.QC > R.QOS + 1e-6 ? 'sobreasigna' : (R.QC < R.QOS - 1e-6 ? 'subasigna' : 'asigna eficientemente');
+  if(M.exts.length===1){
+    P.push(`<p>Con una externalidad <b>${s>0?'negativa':'positiva'} de ${orig}</b>, el mercado competitivo <b>${dir}</b>: Q<sub>C</sub> = ${fmt1(R.QC)} ${s>0?'&gt;':'&lt;'} Q<sub>OS</sub> = ${fmt1(R.QOS)}, porque las decisiones descansan en ${M.origin==='cons'?'BMg<sub>P</sub>':'CMg<sub>P</sub>'} y no en ${M.origin==='cons'?'BMg<sub>S</sub>':'CMg<sub>S</sub>'}. ${M.origin==='cons'?`El precio de mercado resulta ${s>0?'mayor':'menor'} que P<sub>OS</sub>.`:`El precio de mercado resulta ${s>0?'menor':'mayor'} que P<sub>OS</sub>.`}</p>`);
+  } else {
+    const list = M.exts.map((x,i)=>`${i+1}) ${x.s>0?'negativa':'positiva'} de ${x.origin==='prod'?'producción':'consumo'}`).join('; ');
+    const XOS = M.X(R.QOS);
+    const net = Math.abs(XOS)<1e-6 ? 'los costos y beneficios externos <b>se compensan exactamente</b> en el margen' :
+                XOS>0 ? `predominan los <b>costos externos</b> (efecto neto X(Q<sub>OS</sub>) = ${fmt2(XOS)} &gt; 0)` : `predominan los <b>beneficios externos</b> (efecto neto X(Q<sub>OS</sub>) = ${fmt2(XOS)} &lt; 0)`;
+    const pTxt = Math.abs(R.PC-R.POS)<1e-6 ? 'igual a' : (R.PC>R.POS?'mayor que':'menor que');
+    P.push(`<p><b>${M.exts.length} externalidades simultáneas</b> (${list}). En el margen ${net}, por lo que el mercado competitivo <b>${dir}</b>: Q<sub>C</sub> = ${fmt1(R.QC)} frente a Q<sub>OS</sub> = ${fmt1(R.QOS)}. El precio competitivo (${fmt1(R.PC)}) resulta ${pTxt} P<sub>OS</sub> (${fmt1(R.POS)}).</p>`);
+    P.push(`<p>Para la <b>eficiencia</b> solo importa el efecto externo marginal <b>neto</b>, que define la cuña correctora: X(Q) = Σ s<sub>k</sub>·EMg<sub>k</sub>(Q). Para la <b>distribución</b>, en cambio, importa cada componente: los terceros dañados no se ven compensados por el beneficio que reciben otros terceros, aunque el efecto neto sea nulo.${M.hasCons&&M.hasProd?' Como hay efectos en ambos lados, se desplazan simultáneamente BMg<sub>S</sub> y CMg<sub>S</sub>.':''}</p>`);
+  }
+  if(M.power!=='none'){
+    const QM=rNone.Q, dC=Math.abs(R.QC-R.QOS), dM=Math.abs(QM-R.QOS);
+    let t=`<p><b>Poder de mercado:</b> la restricción de cantidad lleva a Q<sub>M</sub> = ${fmt1(QM)} &lt; Q<sub>C</sub>. `;
+    if(s>0){
+      if(QM > R.QOS+1e-6) t+= 'Como la externalidad es negativa, esa restricción <b>acerca</b> la asignación al óptimo (dos distorsiones de signo opuesto se compensan parcialmente), aunque persiste sobreproducción.';
+      else if(QM < R.QOS-1e-6) t+= 'La restricción por poder de mercado <b>más que compensa</b> la sobreproducción inducida por la externalidad: ahora se produce <i>menos</i> que Q<sub>OS</sub>. El instrumento correcto de segundo mejor pasa a ser un <b>subsidio</b> (Buchanan, 1969).';
+      else t+='Por coincidencia, las dos distorsiones se compensan exactamente.';
+    } else t+= 'Con una externalidad positiva, ambas distorsiones operan en el <b>mismo sentido</b> (subasignación) y se refuerzan.';
+    t+=` Distancia al óptimo: |Q<sub>C</sub> − Q<sub>OS</sub>| = ${fmt1(dC)} vs. |Q<sub>M</sub> − Q<sub>OS</sub>| = ${fmt1(dM)}.</p>`;
+    P.push(t);
+  }
+  if(r.ok){
+    const pieTxt = r.PIE>1e-6*Math.max(1,Math.abs(r.Wmax)) ? `deja una PIE de ${fmt1(r.PIE)} (${((1-r.eff)*100).toFixed(1)}% de W<sub>máx</sub>)` : 'alcanza la asignación eficiente (PIE = 0)';
+    let t=`<p><b>${SHORT[inst]}:</b> la medida ${pieTxt}. `;
+    if(inst==='pigou' && M.power!=='none') t+='La regla pigouviana tradicional presupone competencia; con poder de mercado no garantiza el óptimo y puede incluso <b>reducir</b> el bienestar respecto de no intervenir'+(r.W<rNone.W-1e-6?' — como ocurre con estos parámetros.':'.');
+    if(inst==='second') t+='La cuña óptima corrige simultáneamente la externalidad y el poder de mercado; requiere conocer la estructura de mercado además del efecto externo.';
+    if(inst==='coase' && M.exts.length>1) t+='Con varias externalidades, la negociación eficiente exige que <b>todos</b> los grupos de terceros (dañados y beneficiados) participen coordinadamente; en la práctica, los costos de transacción crecen con el número de partes y debilitan la aplicabilidad del teorema. ';
+    if(inst==='coase') t+= M.power==='none' ? 'La asignación de derechos no altera la cantidad final; solo determina la dirección de los pagos (resultado distributivo).' : 'Aun sin costos de transacción, la negociación entre generadores y afectados no involucra a la contraparte del mercado: corrige la externalidad pero no la distorsión por poder de mercado.';
+    if(r.Pb<0) t+=' Nótese que el precio neto del comprador resulta <b>negativo</b>: el subsidio requerido supera el precio de oferta (se paga por consumir), señal de la magnitud de la doble distorsión.';
+    if(inst==='qty' && !r.binding) t+='La regulación no es restrictiva con los parámetros actuales.';
+    if(inst==='permits') t+= r.auction?'Con subasta, la renta de escasez se convierte en recaudación (equivalente a un impuesto).':'Con asignación gratuita, el bienestar total no cambia respecto de la subasta, pero la renta queda en manos de los generadores.';
+    t+='</p>'; P.push(t);
+  }
+  $('interp').innerHTML = P.join('');
+}
+
+/* ---------- eventos ---------- */
+['a','b','c','d','beta','tman','power','inst','auction','showSurplus','showDWL','showExt','showMR','showRef'].forEach(id=>{
+  $(id).addEventListener('input', render); $(id).addEventListener('change', render);
+});
+
+/* ---------- obturador de tema claro / oscuro (persistencia tolerante a iframes de Moodle) ---------- */
+const root=document.documentElement;
+function applyTheme(t){
+  root.setAttribute('data-theme',t);
+  $('themeToggle').checked = t==='dark';
+  $('themeLabel').textContent = t==='dark'?'Oscuro':'Claro';
+  $('themeKnob').textContent = t==='dark'?'☾':'☀';
+}
+let initial='light';
+try{ const sv=localStorage.getItem('extern-theme'); if(sv) initial=sv; else if(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) initial='dark'; }catch(e){}
+applyTheme(initial);
+$('themeToggle').addEventListener('change',()=>{
+  const t=$('themeToggle').checked?'dark':'light'; applyTheme(t);
+  try{ localStorage.setItem('extern-theme',t); }catch(e){}
+});
+
+buildExtList();
+render();
+})();
+
+</script>
+</body>
+</html>
